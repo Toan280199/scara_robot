@@ -55,13 +55,6 @@ function main_OpeningFcn(hObject, eventdata, handles, varargin)
 handles.output = hObject;
 rotate3d on
 view(15,11)
-global plot_data;
-plot_data = [];
-
-global a1 a2 d1;
-a1     = 0.45;
-a2     = 0.4;
-d1     = 0.46;
 
 % Update handles structure
 guidata(hObject, handles);

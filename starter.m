@@ -58,6 +58,14 @@ handles.output = hObject;
 % Update handles structure
 guidata(hObject, handles);
 
+global plot_data;
+plot_data = [];
+
+global a1 a2 d1;
+a1     = 0.45;
+a2     = 0.4;
+d1     = 0.46;
+
 % UIWAIT makes starter wait for user response (see UIRESUME)
 % uiwait(handles.figure1);
 
@@ -86,7 +94,8 @@ function Inverse_Btn_Callback(hObject, eventdata, handles)
 % hObject    handle to Inverse_Btn (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-
+inverse;
+closereq();
 
 % --- Executes on button press in Pathplanning_Btn.
 function Pathplanning_Btn_Callback(hObject, eventdata, handles)

@@ -8,6 +8,9 @@ theta4 = get(handles.t4vl,'value');
 %% Update POSE
 % Get parameters
 global a1 a2 d1;
+a1     = 0.45;
+a2     = 0.4;
+d1     = 0.46;
 
 a     = [a1    ; a2     ;  0  ; 0     ];
 alpha = [0     ; 0     ;  0  ;  pi     ];
