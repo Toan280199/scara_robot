@@ -1,5 +1,5 @@
-function varargout = main(varargin)
-% MAIN M-file for main.fig
+function varargout = forward(varargin)
+% MAIN M-file for forward.fig
 %      MAIN, by itself, creates a new MAIN or raises the existing
 %      singleton*.
 %
@@ -11,16 +11,16 @@ function varargout = main(varargin)
 %
 %      MAIN('Property','Value',...) creates a new MAIN or raises the
 %      existing singleton*.  Starting from the left, property value pairs are
-%      applied to the GUI before main_OpeningFcn gets called.  An
+%      applied to the GUI before forward_OpeningFcn gets called.  An
 %      unrecognized property name or invalid value makes property application
-%      stop.  All inputs are passed to main_OpeningFcn via varargin.
+%      stop.  All inputs are passed to forward_OpeningFcn via varargin.
 %
 %      *See GUI Options on GUIDE's Tools menu.  Choose "GUI allows only one
 %      instance to run (singleton)".
 %
 % See also: GUIDE, GUIDATA, GUIHANDLES
 
-% Edit the above text to modify the response to help main
+% Edit the above text to modify the response to help forward
 
 % Last Modified by GUIDE v2.5 10-Oct-2021 23:47:08
 
@@ -28,8 +28,8 @@ function varargout = main(varargin)
 gui_Singleton = 1;
 gui_State = struct('gui_Name',       mfilename, ...
                    'gui_Singleton',  gui_Singleton, ...
-                   'gui_OpeningFcn', @main_OpeningFcn, ...
-                   'gui_OutputFcn',  @main_OutputFcn, ...
+                   'gui_OpeningFcn', @forward_OpeningFcn, ...
+                   'gui_OutputFcn',  @forward_OutputFcn, ...
                    'gui_LayoutFcn',  [] , ...
                    'gui_Callback',   []);
 if nargin && ischar(varargin{1})
@@ -43,28 +43,29 @@ else
 end
 % End initialization code - DO NOT EDIT
 
-% --- Executes just before main is made visible.
-function main_OpeningFcn(hObject, eventdata, handles, varargin)
+% --- Executes just before forward is made visible.
+function forward_OpeningFcn(hObject, eventdata, handles, varargin)
 % This function has no output args, see OutputFcn.
 % hObject    handle to figure
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-% varargin   command line arguments to main (see VARARGIN)
+% varargin   command line arguments to forward (see VARARGIN)
 
-% Choose default command line output for main
+% Choose default command line output for forward
 handles.output = hObject;
+handles(axes1)
 rotate3d on
 view(15,11)
 
 % Update handles structure
 guidata(hObject, handles);
-ForwardKinematic(handles)
+ForwardKinematic(0, pi/2, 0, 0, handles)
 
-% UIWAIT makes main wait for user response (see UIRESUME)
+% UIWAIT makes forward wait for user response (see UIRESUME)
 % uiwait(handles.figure1);
 
 % --- Outputs from this function are returned to the command line.
-function varargout = main_OutputFcn(hObject, eventdata, handles) 
+function varargout = forward_OutputFcn(hObject, eventdata, handles) 
 % varargout  cell array for returning output args (see VARARGOUT);
 % hObject    handle to figure
 % eventdata  reserved - to be defined in a future version of MATLAB
@@ -83,7 +84,12 @@ function t1vl_Callback(hObject, eventdata, handles)
 %        get(hObject,'Min') and get(hObject,'Max') to determine range of slider
 theta1 = get(handles.t1vl,'value');
 set(handles.t1dp,'string',num2str(theta1/3.14*180));
-ForwardKinematic(handles);
+
+theta1 = get(handles.t1vl,'value');
+theta2 = get(handles.t2vl,'value');
+d3 = get(handles.d3vl,'value');
+theta4 = get(handles.t4vl,'value');
+ForwardKinematic(theta1, theta2, d3, theta4, handles)
 
 % --- Executes during object creation, after setting all properties.
 function t1vl_CreateFcn(hObject, eventdata, handles)
@@ -106,7 +112,11 @@ function t2vl_Callback(hObject, eventdata, handles)
 %        get(hObject,'Min') and get(hObject,'Max') to determine range of slider
 theta2 = get(handles.t2vl,'value');
 set(handles.t2dp,'string',num2str(theta2/3.14*180));
-ForwardKinematic(handles);
+theta1 = get(handles.t1vl,'value');
+theta2 = get(handles.t2vl,'value');
+d3 = get(handles.d3vl,'value');
+theta4 = get(handles.t4vl,'value');
+ForwardKinematic(theta1, theta2, d3, theta4, handles)
 
 % --- Executes during object creation, after setting all properties.
 function t2vl_CreateFcn(hObject, eventdata, handles)
@@ -130,7 +140,11 @@ function d3vl_Callback(hObject, eventdata, handles)
 
 d3 = get(handles.d3vl,'value');
 set(handles.d3dp,'string',num2str(d3));
-ForwardKinematic(handles);
+theta1 = get(handles.t1vl,'value');
+theta2 = get(handles.t2vl,'value');
+d3 = get(handles.d3vl,'value');
+theta4 = get(handles.t4vl,'value');
+ForwardKinematic(theta1, theta2, d3, theta4, handles)
 
 % --- Executes during object creation, after setting all properties.
 function d3vl_CreateFcn(hObject, eventdata, handles)
@@ -154,7 +168,11 @@ function t4vl_Callback(hObject, eventdata, handles)
 
 theta4 = get(handles.t4vl,'value');
 set(handles.t4dp,'string',num2str(theta4/3.14*180));
-ForwardKinematic(handles);
+theta1 = get(handles.t1vl,'value');
+theta2 = get(handles.t2vl,'value');
+d3 = get(handles.d3vl,'value');
+theta4 = get(handles.t4vl,'value');
+ForwardKinematic(theta1, theta2, d3, theta4, handles)
 
 % --- Executes during object creation, after setting all properties.
 function t4vl_CreateFcn(hObject, eventdata, handles)
@@ -406,7 +424,7 @@ function clearBtn_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 global plot_data
 plot_data = [];
-ForwardKinematic(handles)
+ForwardKinematic(0,pi/2,0,0,handles)
 
 
 % --- Executes on button press in goHome_Btn.

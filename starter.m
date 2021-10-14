@@ -87,7 +87,7 @@ function ForwardBtn_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 closereq();
-main;
+forward;
 
 % --- Executes on button press in Inverse_Btn.
 function Inverse_Btn_Callback(hObject, eventdata, handles)

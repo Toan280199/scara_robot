@@ -59,6 +59,7 @@ view(15,11)
 
 % Update handles structure
 guidata(hObject, handles);
+InverseKinametic(0.45,0.4,0,0,handles);
 
 % UIWAIT makes inverse wait for user response (see UIRESUME)
 % uiwait(handles.figure1);
@@ -86,8 +87,13 @@ function x_sld_Callback(hObject, eventdata, handles)
 
 x = get(handles.x_sld,'value');
 set(handles.x_txt,'string',x);
-InverseKinematic(handles);
 
+x = get(handles.x_sld,'value');
+y = get(handles.y_sld,'value');
+z = get(handles.z_sld,'value');
+yaw = get(handles.yaw_sld,'value');
+
+InverseKinametic(x,y,z,yaw,handles)
 
 % --- Executes during object creation, after setting all properties.
 function x_sld_CreateFcn(hObject, eventdata, handles)
@@ -257,7 +263,8 @@ function clear_btn_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 global plot_data
 plot_data = [];
-InverseKinametic(handles)
+
+InverseKinametic(0.45,0.4,0.46,0,handles)
 
 % --- Executes on button press in hme_btn.
 function hme_btn_Callback(hObject, eventdata, handles)
@@ -285,7 +292,12 @@ function y_sld_Callback(hObject, eventdata, handles)
 
 y = get(handles.y_sld,'value');
 set(handles.y_txt,'string',y);
-InverseKinematic(handles);
+x = get(handles.x_sld,'value');
+y = get(handles.y_sld,'value');
+z = get(handles.z_sld,'value');
+yaw = get(handles.yaw_sld,'value');
+
+InverseKinametic(x,y,z,yaw,handles)
 
 
 % --- Executes during object creation, after setting all properties.
@@ -311,7 +323,12 @@ function z_sld_Callback(hObject, eventdata, handles)
 
 z = get(handles.z_sld,'value');
 set(handles.z_txt,'string',z);
-InverseKinematic(handles);
+x = get(handles.x_sld,'value');
+y = get(handles.y_sld,'value');
+z = get(handles.z_sld,'value');
+yaw = get(handles.yaw_sld,'value');
+
+InverseKinametic(x,y,z,yaw,handles)
 
 
 % --- Executes during object creation, after setting all properties.
@@ -336,7 +353,12 @@ function yaw_sld_Callback(hObject, eventdata, handles)
 %        get(hObject,'Min') and get(hObject,'Max') to determine range of slider
 yaw = get(handles.yaw_sld,'value');
 set(handles.yawvl,'string',yaw*180/pi);
-InverseKinematic(handles);
+x = get(handles.x_sld,'value');
+y = get(handles.y_sld,'value');
+z = get(handles.z_sld,'value');
+yaw = get(handles.yaw_sld,'value');
+
+InverseKinametic(x,y,z,yaw,handles)
 
 
 % --- Executes during object creation, after setting all properties.

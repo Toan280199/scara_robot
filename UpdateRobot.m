@@ -1,4 +1,5 @@
 function UpdateRobot(p0,p1,p2,p3,p4,handles)
+axes(handles.axes1)
 [Az,El] = view;
 global plot_data d1 a1 a2;
 cla reset

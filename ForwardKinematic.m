@@ -1,9 +1,4 @@
-function ForwardKinematic(handles)
-
-theta1 = get(handles.t1vl,'value');
-theta2 = get(handles.t2vl,'value');
-d3 = get(handles.d3vl,'value');
-theta4 = get(handles.t4vl,'value');
+function [p4,o4] = ForwardKinematic(theta1, theta2, d3, theta4, handles)
 
 %% Update POSE
 % Get parameters
