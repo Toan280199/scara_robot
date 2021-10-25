@@ -1,17 +1,9 @@
-function [p4,o4] = ForwardKinematic(theta1, theta2, d3, theta4, handles)
+function [p_robot,o_robot] = ForwardKinematic(a, alpha, d, theta)
 
-%% Update POSE
-% Get parameters
-global a1 a2 d1;
-a1     = 0.45;
-a2     = 0.4;
-d1     = 0.46;
-
-a     = [a1    ; a2     ;  0  ; 0     ];
-alpha = [0     ; 0     ;  0  ;  pi     ];
-d     = [d1     ; 0      ;  d3 ; 0    ];
-theta = [theta1; theta2 ;  0  ; theta4];
-
+%% Ham tinh dong hoc thuan c?a robot
+% Input: DH Parameter
+% Output: joint position p1 p2 p3 p4     (x y z)
+%         joint orientation o1 o2 o3 o4  (roll pitch yaw)
 %% FK Matrix
 A0_1 = Link_matrix(a(1),alpha(1),d(1),theta(1)) ;
 A1_2 = Link_matrix(a(2),alpha(2),d(2),theta(2)) ;
@@ -27,12 +19,6 @@ p0 = [0;0;0];
 [p2, o2] = cal_pose(A0_2,p0);
 [p3, o3] = cal_pose(A0_3,p0);
 [p4, o4] = cal_pose(A0_4,p0);
-set(handles.xvl,'String',num2str(round(1000*p4(1))/1000));
-set(handles.yvl,'String',num2str(round(1000*p4(2))/1000));
-set(handles.zvl,'String',num2str(round(1000*p4(3))/1000));
-set(handles.rollvl,'String',round(o3(1)*180/pi,3));
-set(handles.pitchvl,'String',round(o4(2)*180/pi,3));
-set(handles.yawvl,'String',round(o4(3)*180/pi,3));
 
-%% Plot
-UpdateRobot(p0,p1,p2,p3,p4,handles);
+p_robot = [p1 p2 p3 p4]';
+o_robot = [o1; o2; o3; o4];
