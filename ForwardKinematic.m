@@ -1,5 +1,12 @@
 function [p_robot,o_robot] = ForwardKinematic(a, alpha, d, theta)
 
+global theta1_max theta2_max d3_max
+if (abs(theta(1))*180/pi>theta1_max)||(abs(theta(2))*180/pi>theta2_max)||(d(3)<-d3_max)
+    ok = 0;
+    warndlg('Out of workspace','Warning');
+    return
+end
+
 %% Ham tinh dong hoc thuan c?a robot
 % Input: DH Parameter
 % Output: joint position p1 p2 p3 p4     (x y z)

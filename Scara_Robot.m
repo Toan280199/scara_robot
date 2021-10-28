@@ -29,7 +29,11 @@ set(handles.pn_IV,'Visible','off');
 
 global a alpha d theta;
 global pos orien;
+global theta1_max theta2_max d3_max;
 
+theta1_max = 180;
+theta2_max = 180;
+d3_max = 0.42;
 a     = [0.45;    0.40;     0.00;      0.00];
 alpha = [0.00;    0.00;     0.00;      180];
 d     = [0.46;    0.00;     0.00;      0.00];
@@ -52,17 +56,16 @@ varargout{1} = handles.output;
 % --- Executes on button press in cb_view_ws.
 function cb_view_ws_Callback(hObject, eventdata, handles)
 
-global a pos orien;
+global a pos orien theta1_max theta2_max d3_max d;
 if get(hObject, 'Value')
-    r_min = abs(a(1) - a(2));
-    r_max = a(1) + a(2);
     axes(handles.robot_plot);
-    gama = linspace(-pi,pi,181);
-    z = 0.04:0.07:0.46;
-    for i = 1:length(z)
-        plot3(r_min*cos(gama),r_min*sin(gama),z(i)*ones(181,1),'r','LineWidth',3);
-        plot3(r_max*cos(gama),r_max*sin(gama),z(i)*ones(181,1),'r','LineWidth',3);
-    end
+    theta1_m = theta1_max*pi/180;
+    theta2_m = theta2_max*pi/180;
+    theta1 = linspace(-theta1_m,theta1_m,181);
+    fill([(a(1)+a(2))*cos(theta1) 0],[(a(1)+a(2))*sin(theta1) 0],'r');
+    theta2 = linspace(-theta2_m,theta2_m,181);
+    fill([a(1)*cos(theta1_m)+a(2)*cos(theta1_m+theta2) a(1)*cos(theta1_m)],[a(1)*sin(theta1_m)+a(2)*sin(theta1_m+theta2) a(1)*sin(theta1_m)],'r');
+    fill([a(1)*cos(-theta1_m)+a(2)*cos(-theta1_m+theta2) a(1)*cos(-theta1_m)],[a(1)*sin(-theta1_m)+a(2)*sin(-theta1_m+theta2) a(1)*sin(-theta1_m)],'r');
 else
     UpdateRobot(pos,orien,handles,11,11);
 end
@@ -130,16 +133,6 @@ function vl_d1_CreateFcn(hObject, eventdata, handles)
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
 end
-
-
-% --- Executes on button press in btn_set_constant.
-function btn_set_constant_Callback(hObject, eventdata, handles)
-
-global a alpha d theta;
-a(1) = str2double(get(handles.vl_a1,'String'));
-a(2) = str2double(get(handles.vl_a2,'String'));
-d(1) = str2double(get(handles.vl_d1,'String'));
-set(handles.tb_dh,'Data',[a alpha d theta]);   %put dh parameter to DH table
 
 % --- Executes on button press in btn_Forward.
 function btn_Forward_Callback(hObject, eventdata, handles)
@@ -379,23 +372,23 @@ set(handles.vl__FW_y,'String',num2str(pos(4,2)));
 set(handles.vl__FW_z,'String',num2str(pos(4,3)));
 set(handles.vl__FW_yaw,'String',num2str(orien(4,3)*180/pi));
 UpdateRobot(pos,orien,handles,11,11);
-
-% --- Executes on button press in btn_reset_constant.
-function btn_reset_constant_Callback(hObject, eventdata, handles)
-
-global a alpha d theta;
-set(handles.vl_a1,'String','0.45');
-set(handles.vl_a2,'String','0.40');
-set(handles.vl_d1,'String','0.46');
-
-a(1) = 0.45;
-a(2) = 0.40;
-d(1) = 0.46;
-set(handles.tb_dh,'Data',[a alpha d theta]);   %put dh parameter to DH table
-
-
 % --- Executes on button press in cb_record.
 function cb_record_Callback(hObject, eventdata, handles)
+
+% while get(hObject, 'Value')
+%     i = 1;
+%     if (get(hObject, 'Value'))
+%         F(i)=getframe(handles.robot_plot);
+%         pause(0.1);
+%         i = i + 1;
+%     end
+%     video = VideoWriter('TestMovie_sbg.avi','Uncompressed AVI');
+%     length(F)
+%     video.FrameRate = 8;
+%     open(video)
+%     writeVideo(video,F);
+%     close(video)
+end
 
 % --- Executes on slider movement.
 function sld_IV_x_Callback(hObject, eventdata, handles)
@@ -575,10 +568,117 @@ global a alpha d theta pos orien
     
     theta(1) = 0;
     theta(2) = 90;
-    d3 = 0;
+    d(3) = 0;
     theta(4) = 0;
 
     [pos,orien] = ForwardKinematic(a, alpha*pi/180, d, theta*pi/180)
     UpdateRobot(pos,orien,handles,11,11);
     set(handles.tb_dh,'Data',[a alpha d theta]);   %put dh parameter to DH table
     set(handles.tb_pos_orien,'Data',[pos orien*180/pi]);   %put dh parameter to DH table
+
+
+% --- Executes on button press in rb_MSL850.
+function rb_MSL850_Callback(hObject, eventdata, handles)
+
+global a alpha d theta
+global theta1_max theta2_max d3_max;
+theta1_max = 180;
+theta2_max = 180;
+d3_max = 0.42;
+
+a(1) = 0.45;
+a(2) = 0.40;
+d(1) = 0.46;
+set(handles.vl_a1,'String',a(1)) 
+set(handles.vl_a2,'String',a(2)) 
+set(handles.vl_d1,'String',d(1)) 
+[pos,orien] = ForwardKinematic(a, alpha*pi/180, d, theta*pi/180)
+UpdateRobot(pos,orien,handles,11,11);
+
+% --- Executes on button press in rb_MSL1000.
+function rb_MSL1000_Callback(hObject, eventdata, handles)
+
+global a alpha d theta
+global theta1_max theta2_max d3_max;
+theta1_max = 180;
+theta2_max = 180;
+d3_max = 0.42;
+
+a(1) = 0.6;
+a(2) = 0.4;
+d(1) = 0.46;
+set(handles.vl_a1,'String',a(1)) 
+set(handles.vl_a2,'String',a(2)) 
+set(handles.vl_d1,'String',d(1)) 
+[pos,orien] = ForwardKinematic(a, alpha*pi/180, d, theta*pi/180)
+UpdateRobot(pos,orien,handles,11,11);
+
+% --- Executes on button press in rb_MSL650.
+function rb_MSL650_Callback(hObject, eventdata, handles)
+
+global a alpha d theta
+global theta1_max theta2_max d3_max;
+theta1_max = 180;
+theta2_max = 180;
+d3_max = 0.42;
+
+a(1) = 0.4;
+a(2) = 0.25;
+d(1) = 0.46;
+set(handles.vl_a1,'String',a(1)) 
+set(handles.vl_a2,'String',a(2)) 
+set(handles.vl_d1,'String',d(1)) 
+[pos,orien] = ForwardKinematic(a, alpha*pi/180, d, theta*pi/180)
+UpdateRobot(pos,orien,handles,11,11);
+
+% --- Executes on button press in rb_THL300.
+function rb_THL300_Callback(hObject, eventdata, handles)
+
+global a alpha d theta
+global theta1_max theta2_max d3_max;
+theta1_max = 125;
+theta2_max = 145;
+d3_max = 0.3;
+a(1) = 0.55;
+a(2) = 0.45;
+d(1) = 0.194;
+set(handles.vl_a1,'String',a(1)) 
+set(handles.vl_a2,'String',a(2)) 
+set(handles.vl_d1,'String',d(1)) 
+[pos,orien] = ForwardKinematic(a, alpha*pi/180, d, theta*pi/180)
+UpdateRobot(pos,orien,handles,11,11);
+
+% --- Executes on button press in rb_THL400.
+function rb_THL400_Callback(hObject, eventdata, handles)
+
+global a alpha d theta
+global theta1_max theta2_max d3_max;
+a(1) = 0.35;
+a(2) = 0.45;
+d(1) = 0.15;
+theta1_max = 125;
+theta2_max = 145;
+d3_max = 0.16;
+set(handles.vl_a1,'String',a(1)) 
+set(handles.vl_a2,'String',a(2)) 
+set(handles.vl_d1,'String',d(1)) 
+[pos,orien] = ForwardKinematic(a, alpha*pi/180, d, theta*pi/180)
+UpdateRobot(pos,orien,handles,11,11);
+
+% --- Executes on button press in rb_THL600.
+function rb_THL600_Callback(hObject, eventdata, handles)
+
+global a alpha d theta
+global theta1_max theta2_max d3_max;
+theta1_max = 125;
+theta2_max = 145;
+d3_max = 0.15;
+
+a(1) = 0.3;
+a(2) = 0.3;
+d(1) = 0.179;
+set(handles.vl_a1,'String',a(1)) 
+set(handles.vl_a2,'String',a(2)) 
+set(handles.vl_d1,'String',d(1)) 
+[pos,orien] = ForwardKinematic(a, alpha*pi/180, d, theta*pi/180)
+UpdateRobot(pos,orien,handles,11,11);
