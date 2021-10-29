@@ -1,18 +1,24 @@
-function UpdateRobot(pos,orien,handles,Az,El)
-global d a
+function UpdateRobot(robot,handles,Az,El)
+
 set(handles.cb_view_ws,'Value',0);
 set(handles.cb_show_coor,'Value',0);
-robot = handles.robot_plot;
-axes(robot)
+set(handles.tb_dh,'Data',[robot.a robot.alpha robot.d robot.theta]);   %put dh parameter to DH table
+set(handles.tb_pos_orien,'Data',[robot.pos robot.orien*180/pi]);   %put dh parameter to DH table
+
+robot_plot = handles.robot_plot;
+axes(robot_plot)
 cla reset
 hold on
 grid on
 
 p0 = [0 0 0];
-p1 = pos(1,:);
-p2 = pos(2,:);
-p3 = pos(3,:);
-p4 = pos(4,:);
+p1 = robot.pos(1,:);
+p2 = robot.pos(2,:);
+p3 = robot.pos(3,:);
+p4 = robot.pos(4,:);
+d = robot.d;
+a = robot.a;
+orien = robot.orien;
 
 % define links
 line1=[[p0(1) p1(1)];[p0(2) p1(2)];[p0(3) p1(3)]];
@@ -20,9 +26,9 @@ line2=[[p1(1) p2(1)];[p1(2) p2(2)];[p1(3) p2(3)]];
 line3=[[p2(1) p3(1)];[p2(2) p3(2)];[p2(3) p3(3)]];
 line4=[[p3(1) p4(1)];[p3(2) p4(2)];[p3(3) p4(3)]];
 
-xlabel(robot,'x');
-ylabel(robot,'y');
-zlabel(robot,'z');
+xlabel(robot_plot,'x');
+ylabel(robot_plot,'y');
+zlabel(robot_plot,'z');
 % xlim(robot,[-1 1]);
 % ylim(robot,[-1 1]);
 % zlim(robot,[-0.2 0.6]);
@@ -32,7 +38,7 @@ t = (1/16:1/32:1)'*2*pi;
 x = (a(1)+a(2))*cos(t);
 y = (a(1)+a(2))*sin(t);
 z = zeros(length(t),1);
-fill3(robot,x,y,z,'g','FaceAlpha',0.25);
+fill3(robot_plot,x,y,z,'g','FaceAlpha',0.25);
 rotate3d on
 view(45,45)
 

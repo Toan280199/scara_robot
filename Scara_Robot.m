@@ -27,26 +27,15 @@ guidata(hObject, handles);
 set(handles.pn_FW,'Visible','on');
 set(handles.pn_IV,'Visible','off');
 
-global a alpha d theta;
-global pos orien;
-global theta1_max theta2_max d3_max;
+global myScara;
+myScara = SCARA(handles,0.45,0.4,0.46,180,180,0.42)
 
-theta1_max = 180;
-theta2_max = 180;
-d3_max = 0.42;
-a     = [0.45;    0.40;     0.00;      0.00];
-alpha = [0.00;    0.00;     0.00;      180];
-d     = [0.46;    0.00;     0.00;      0.00];
-theta = [0.00;     90;     0.00;      0.00];
-[pos,orien] = ForwardKinematic(a, alpha*pi/180, d, theta*pi/180)
-set(handles.tb_dh,'Data',[a alpha d theta]);   %put dh parameter to DH table
-set(handles.tb_pos_orien,'Data',[pos orien*180/pi]);   %put dh parameter to DH table
 %output (x, y, z, yaw)
-set(handles.vl__FW_x,'String',num2str(pos(4,1)));
-set(handles.vl__FW_y,'String',num2str(pos(4,2)));
-set(handles.vl__FW_z,'String',num2str(pos(4,3)));
-set(handles.vl__FW_yaw,'String',num2str(orien(4,3)*180/pi));
-UpdateRobot(pos,orien,handles,11,11);
+set(handles.vl__FW_x,'String',num2str(myScara.pos(4,1)));
+set(handles.vl__FW_y,'String',num2str(myScara.pos(4,2)));
+set(handles.vl__FW_z,'String',num2str(myScara.pos(4,3)));
+set(handles.vl__FW_yaw,'String',num2str(myScara.orien(4,3)*180/pi));
+UpdateRobot(myScara,handles,22,22); 
 
 % --- Outputs from this function are returned to the command line.
 function varargout = Scara_Robot_OutputFcn(hObject, eventdata, handles) 
@@ -55,40 +44,37 @@ varargout{1} = handles.output;
 
 % --- Executes on button press in cb_view_ws.
 function cb_view_ws_Callback(hObject, eventdata, handles)
-
-global a pos orien theta1_max theta2_max d3_max d;
+global myScara
 if get(hObject, 'Value')
-    axes(handles.robot_plot);
-    theta1_m = theta1_max*pi/180;
-    theta2_m = theta2_max*pi/180;
-    theta1 = linspace(-theta1_m,theta1_m,181);
-    fill([(a(1)+a(2))*cos(theta1) 0],[(a(1)+a(2))*sin(theta1) 0],'r');
-    theta2 = linspace(-theta2_m,theta2_m,181);
-    fill([a(1)*cos(theta1_m)+a(2)*cos(theta1_m+theta2) a(1)*cos(theta1_m)],[a(1)*sin(theta1_m)+a(2)*sin(theta1_m+theta2) a(1)*sin(theta1_m)],'r');
-    fill([a(1)*cos(-theta1_m)+a(2)*cos(-theta1_m+theta2) a(1)*cos(-theta1_m)],[a(1)*sin(-theta1_m)+a(2)*sin(-theta1_m+theta2) a(1)*sin(-theta1_m)],'r');
+    PlotWorkspace(handles,myScara);
 else
-    UpdateRobot(pos,orien,handles,11,11);
+    UpdateRobot(myScara,handles,22,22);  
 end
 
 % --- Executes on button press in cb_show_coor.
 function cb_show_coor_Callback(hObject, eventdata, handles)
 
-global pos orien
+global myScara
 if get(hObject, 'Value')
     axes(handles.robot_plot);
     % plot coordinate
-    plot_coordinate(0,0,0.5,-1,-1,1,0);
-    plot_coordinate(pos(1,1),pos(1,2),pos(1,3)+0.5,1,1,1,1);
-    plot_coordinate(pos(2,1),pos(2,2),pos(2,3)+0.5,1,1,1,2);
-    plot_coordinate(pos(3,1),pos(3,2),pos(3,3)+0.5,1,1,1,3);
-    plot_coordinate(pos(4,1),pos(4,2),pos(4,3)+0.5,-1,1,-1,4);
+    A0_1 = Link_matrix(myScara.a(1),myScara.alpha(1)*pi/180,myScara.d(1),myScara.theta(1)*pi/180) 
+    A1_2 = Link_matrix(myScara.a(2),myScara.alpha(2)*pi/180,myScara.d(2),myScara.theta(2)*pi/180) ;
+    A2_3 = Link_matrix(myScara.a(3),myScara.alpha(3)*pi/180,myScara.d(3),myScara.theta(3)*pi/180) ;
+    A3_4 = Link_matrix(myScara.a(4),myScara.alpha(4)*pi/180,myScara.d(4),myScara.theta(4)*pi/180) ;
+    A0_0=[1 0 0 0; 0 1 0 0; 0 0 1 0; 0 0 0 1];
+    A0_2=A0_1*A1_2;
+    A0_3=A0_1*A1_2*A2_3;
+    A0_4=A0_1*A1_2*A2_3*A3_4;   % Te
+
+    plot_coordinate(0,0,0+myScara.d(1)*5/4,A0_0,'0');
+    plot_coordinate(myScara.pos(1,1),myScara.pos(1,2),myScara.pos(1,3)+myScara.d(1)*4/4,A0_1,'1');
+    plot_coordinate(myScara.pos(2,1),myScara.pos(2,2),myScara.pos(2,3)+myScara.d(1)*4/4,A0_2,'2');
+    plot_coordinate(myScara.pos(3,1),myScara.pos(3,2),myScara.pos(3,3)+myScara.d(1)*4/4,A0_3,'3');
+    plot_coordinate(myScara.pos(4,1),myScara.pos(4,2),myScara.pos(4,3)+myScara.d(1)*2/4,A0_4,'4');
 else
-    UpdateRobot(pos,orien,handles,11,11);
+    UpdateRobot(myScara,handles,22,22); 
 end
-
-function vl_a1_Callback(hObject, eventdata, handles)
-
-a(1) = str2double(get(handles.vl_a1,'String'));
 
 % --- Executes during object creation, after setting all properties.
 function vl_a1_CreateFcn(hObject, eventdata, handles)
@@ -102,10 +88,6 @@ if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgr
     set(hObject,'BackgroundColor','white');
 end
 
-function vl_a2_Callback(hObject, eventdata, handles)
-
-a(2) = str2double(get(handles.vl_a2,'String'));
-
 % --- Executes during object creation, after setting all properties.
 function vl_a2_CreateFcn(hObject, eventdata, handles)
 % hObject    handle to vl_a2 (see GCBO)
@@ -118,18 +100,9 @@ if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgr
     set(hObject,'BackgroundColor','white');
 end
 
-function vl_d1_Callback(hObject, eventdata, handles)
-
-d(1) = str2double(get(handles.vl_d1,'String'));
-
 % --- Executes during object creation, after setting all properties.
 function vl_d1_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to vl_d1 (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    empty - handles not created until after all CreateFcns called
 
-% Hint: edit controls usually have a white background on Windows.
-%       See ISPC and COMPUTER.
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
 end
@@ -167,15 +140,10 @@ set(handles.vl__FW_t1,'string',num2str(theta1));
 
 % --- Executes during object creation, after setting all properties.
 function sld__FW_t1_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to sld__FW_t1 (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    empty - handles not created until after all CreateFcns called
 
-% Hint: slider controls usually have a light gray background.
 if isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor',[.9 .9 .9]);
 end
-
 
 % --- Executes on slider movement.
 function sld__FW_t2_Callback(hObject, eventdata, handles)
@@ -206,23 +174,14 @@ end
 % --- Executes on slider movement.
 function sld__FW_t4_Callback(hObject, eventdata, handles)
 
-theta(4) = get(handles.sld__FW_t4,'value');
-set(handles.vl__FW_t4,'string',num2str(theta(4)));
+theta4 = get(handles.sld__FW_t4,'value');
+set(handles.vl__FW_t4,'string',num2str(theta4));
 
 % --- Executes during object creation, after setting all properties.
 function sld__FW_t4_CreateFcn(hObject, eventdata, handles)
 
 if isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor',[.9 .9 .9]);
-end
-
-function vl_t1_Callback(hObject, eventdata, handles)
-
-% --- Executes during object creation, after setting all properties.
-function vl_t1_CreateFcn(hObject, eventdata, handles)
-
-if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-    set(hObject,'BackgroundColor','white');
 end
 
 function vl__FW_t1_Callback(hObject, eventdata, handles)
@@ -232,24 +191,6 @@ set(handles.sld__FW_t1, 'value', theta1);
 
 % --- Executes during object creation, after setting all properties.
 function vl__FW_t1_CreateFcn(hObject, eventdata, handles)
-
-if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-    set(hObject,'BackgroundColor','white');
-end
-
-function vl_t2_Callback(hObject, eventdata, handles)
-
-% --- Executes during object creation, after setting all properties.
-function vl_t2_CreateFcn(hObject, eventdata, handles)
-
-if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-    set(hObject,'BackgroundColor','white');
-end
-
-function vl_t4_Callback(hObject, eventdata, handles)
-
-% --- Executes during object creation, after setting all properties.
-function vl_t4_CreateFcn(hObject, eventdata, handles)
 
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
@@ -327,29 +268,26 @@ if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgr
     set(hObject,'BackgroundColor','white');
 end
 
-
 % --- Executes on button press in btn_FW_set.
 function btn_FW_set_Callback(hObject, eventdata, handles)
 
-global a alpha d theta pos orien;
-theta(1) = str2double(get(handles.vl__FW_t1,'String'));
-theta(2) = str2double(get(handles.vl__FW_t2,'String'));
-d(3) = str2double(get(handles.vl__FW_d3,'String'));
-theta(4) = str2double(get(handles.vl__FW_t4,'String'));
-[pos,orien] = ForwardKinematic(a, alpha*pi/180, d, theta*pi/180)
-set(handles.tb_dh,'Data',[a alpha d theta]);   %put dh parameter to DH table
-set(handles.tb_pos_orien,'Data',[pos orien*180/pi]);   %put dh parameter to DH table
+global myScara;
+myScara.theta(1) = str2double(get(handles.vl__FW_t1,'String'));
+myScara.theta(2) = str2double(get(handles.vl__FW_t2,'String'));
+myScara.d(3) = str2double(get(handles.vl__FW_d3,'String'));
+myScara.theta(4) = str2double(get(handles.vl__FW_t4,'String'));
+[myScara.pos,myScara.orien] = myScara.ForwardKinematic(myScara);
 %output (x, y, z, yaw)
-set(handles.vl__FW_x,'String',num2str(pos(4,1)));
-set(handles.vl__FW_y,'String',num2str(pos(4,2)));
-set(handles.vl__FW_z,'String',num2str(pos(4,3)));
-set(handles.vl__FW_yaw,'String',num2str(orien(4,3)*180/pi));
-UpdateRobot(pos,orien,handles,11,11);
+set(handles.vl__FW_x,'String',num2str(myScara.pos(4,1)));
+set(handles.vl__FW_y,'String',num2str(myScara.pos(4,2)));
+set(handles.vl__FW_z,'String',num2str(myScara.pos(4,3)));
+set(handles.vl__FW_yaw,'String',num2str(myScara.orien(4,3)*180/pi));
+UpdateRobot(myScara,handles,22,22); 
 
 % --- Executes on button press in btn_FW_reset.
 function btn_FW_reset_Callback(hObject, eventdata, handles)
 
-global a alpha d theta pos orien;
+global myScara;
 set(handles.sld__FW_t1, 'value', 0);
 set(handles.sld__FW_t2, 'value', 90);
 set(handles.sld__FW_d3, 'value', 0);
@@ -359,36 +297,19 @@ set(handles.vl__FW_t2,'string','90');
 set(handles.vl__FW_d3,'string','0');
 set(handles.vl__FW_t4,'string','0');
 
-theta(1) = 0;
-theta(2) = 90;
-d(3) = 0;
-theta(4) = 0;
-[pos,orien] = ForwardKinematic(a, alpha*pi/180, d, theta*pi/180)
-set(handles.tb_dh,'Data',[a alpha d theta]);   %put dh parameter to DH table
-set(handles.tb_pos_orien,'Data',[pos orien*180/pi]);   %put dh parameter to DH table
+myScara.theta(1) = 0;
+myScara.theta(2) = 90;
+myScara.d(3) = 0;
+myScara.theta(4) = 0;
+[myScara.pos,myScara.orien] = myScara.ForwardKinematic(myScara);
 %output (x, y, z, yaw)
-set(handles.vl__FW_x,'String',num2str(pos(4,1)));
-set(handles.vl__FW_y,'String',num2str(pos(4,2)));
-set(handles.vl__FW_z,'String',num2str(pos(4,3)));
-set(handles.vl__FW_yaw,'String',num2str(orien(4,3)*180/pi));
-UpdateRobot(pos,orien,handles,11,11);
+set(handles.vl__FW_x,'String',num2str(myScara.pos(4,1)));
+set(handles.vl__FW_y,'String',num2str(myScara.pos(4,2)));
+set(handles.vl__FW_z,'String',num2str(myScara.pos(4,3)));
+set(handles.vl__FW_yaw,'String',num2str(myScara.orien(4,3)*180/pi));
+UpdateRobot(myScara,handles,22,22);  
 % --- Executes on button press in cb_record.
 function cb_record_Callback(hObject, eventdata, handles)
-
-% while get(hObject, 'Value')
-%     i = 1;
-%     if (get(hObject, 'Value'))
-%         F(i)=getframe(handles.robot_plot);
-%         pause(0.1);
-%         i = i + 1;
-%     end
-%     video = VideoWriter('TestMovie_sbg.avi','Uncompressed AVI');
-%     length(F)
-%     video.FrameRate = 8;
-%     open(video)
-%     writeVideo(video,F);
-%     close(video)
-end
 
 % --- Executes on slider movement.
 function sld_IV_x_Callback(hObject, eventdata, handles)
@@ -522,8 +443,6 @@ if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgr
     set(hObject,'BackgroundColor','white');
 end
 
-
-
 function vl__IV_t4_Callback(hObject, eventdata, handles)
 
 
@@ -536,149 +455,77 @@ end
 % --- Executes on button press in btn_IV_set.
 function btn_IV_set_Callback(hObject, eventdata, handles)
 
-global a alpha d theta pos orien
+global myScara;
 x = str2double(get(handles.vl__IV_x,'String'));
 y = str2double(get(handles.vl__IV_y,'String'));
 z = str2double(get(handles.vl__IV_z,'String'));
 yaw = str2double(get(handles.vl__IV_yaw,'String'));
-[theta(1),theta(2),d(3),theta(4),sucess] = InverseKinematic(x,y,z,yaw/180*pi,a(1),a(2),d(1));
+[myScara,sucess] = myScara.InverseKinematic(x,y,z,yaw/180*pi,myScara);
 if sucess
-    theta(1) = theta(1)*180/pi;
-    theta(2) = theta(2)*180/pi;
-    theta(4) = theta(4)*180/pi;
 
-    [pos,orien] = ForwardKinematic(a, alpha*pi/180, d, theta*pi/180)
-    set(handles.vl__IV_t1,'String',theta(1));
-    set(handles.vl__IV_t2,'String',theta(2));
-    set(handles.vl__IV_d3,'String',d(3));
-    set(handles.vl__IV_t4,'String',theta(4));
-    UpdateRobot(pos,orien,handles,11,11);
-    set(handles.tb_dh,'Data',[a alpha d theta]);   %put dh parameter to DH table
-    set(handles.tb_pos_orien,'Data',[pos orien*180/pi]);   %put dh parameter to DH table
+    [myScara.pos,myScara.orien] = myScara.ForwardKinematic(myScara)
+    set(handles.vl__IV_t1,'String',myScara.theta(1));
+    set(handles.vl__IV_t2,'String',myScara.theta(2));
+    set(handles.vl__IV_d3,'String',myScara.d(3));
+    set(handles.vl__IV_t4,'String',myScara.theta(4));
+    UpdateRobot(myScara,handles,22,22);  
 end
 
 % --- Executes on button press in btn_IV_reset.
 function btn_IV_reset_Callback(hObject, eventdata, handles)
 
-global a alpha d theta pos orien
+global myScara;
     set(handles.vl__IV_x,'String','0.45');
     set(handles.vl__IV_y,'String','0.40');
     set(handles.vl__IV_z,'String','0.46');
     set(handles.vl__IV_yaw,'String','90');
     
-    theta(1) = 0;
-    theta(2) = 90;
-    d(3) = 0;
-    theta(4) = 0;
+    myScara.theta(1) = 0;
+    myScara.theta(2) = 90;
+    myScara.d(3) = 0;
+    myScara.theta(4) = 0;
 
-    [pos,orien] = ForwardKinematic(a, alpha*pi/180, d, theta*pi/180)
-    UpdateRobot(pos,orien,handles,11,11);
-    set(handles.tb_dh,'Data',[a alpha d theta]);   %put dh parameter to DH table
-    set(handles.tb_pos_orien,'Data',[pos orien*180/pi]);   %put dh parameter to DH table
-
+    [myScara.pos,myScara.orien] = myScara.ForwardKinematic(myScara)
+    UpdateRobot(myScara,handles,22,22);  
 
 % --- Executes on button press in rb_MSL850.
 function rb_MSL850_Callback(hObject, eventdata, handles)
 
-global a alpha d theta
-global theta1_max theta2_max d3_max;
-theta1_max = 180;
-theta2_max = 180;
-d3_max = 0.42;
-
-a(1) = 0.45;
-a(2) = 0.40;
-d(1) = 0.46;
-set(handles.vl_a1,'String',a(1)) 
-set(handles.vl_a2,'String',a(2)) 
-set(handles.vl_d1,'String',d(1)) 
-[pos,orien] = ForwardKinematic(a, alpha*pi/180, d, theta*pi/180)
-UpdateRobot(pos,orien,handles,11,11);
+global myScara;
+myScara = SCARA(handles,0.45,0.4,0.46,180,180,0.42);
+UpdateRobot(myScara,handles,22,22);  
 
 % --- Executes on button press in rb_MSL1000.
 function rb_MSL1000_Callback(hObject, eventdata, handles)
 
-global a alpha d theta
-global theta1_max theta2_max d3_max;
-theta1_max = 180;
-theta2_max = 180;
-d3_max = 0.42;
-
-a(1) = 0.6;
-a(2) = 0.4;
-d(1) = 0.46;
-set(handles.vl_a1,'String',a(1)) 
-set(handles.vl_a2,'String',a(2)) 
-set(handles.vl_d1,'String',d(1)) 
-[pos,orien] = ForwardKinematic(a, alpha*pi/180, d, theta*pi/180)
-UpdateRobot(pos,orien,handles,11,11);
+global myScara;
+myScara = SCARA(handles,0.6,0.4,0.46,180,180,0.42)
+UpdateRobot(myScara,handles,22,22);  
 
 % --- Executes on button press in rb_MSL650.
 function rb_MSL650_Callback(hObject, eventdata, handles)
 
-global a alpha d theta
-global theta1_max theta2_max d3_max;
-theta1_max = 180;
-theta2_max = 180;
-d3_max = 0.42;
-
-a(1) = 0.4;
-a(2) = 0.25;
-d(1) = 0.46;
-set(handles.vl_a1,'String',a(1)) 
-set(handles.vl_a2,'String',a(2)) 
-set(handles.vl_d1,'String',d(1)) 
-[pos,orien] = ForwardKinematic(a, alpha*pi/180, d, theta*pi/180)
-UpdateRobot(pos,orien,handles,11,11);
+global myScara;
+myScara = SCARA(handles,0.4,0.25,0.46,180,180,0.42)
+UpdateRobot(myScara,handles,22,22);  
 
 % --- Executes on button press in rb_THL300.
 function rb_THL300_Callback(hObject, eventdata, handles)
 
-global a alpha d theta
-global theta1_max theta2_max d3_max;
-theta1_max = 125;
-theta2_max = 145;
-d3_max = 0.3;
-a(1) = 0.55;
-a(2) = 0.45;
-d(1) = 0.194;
-set(handles.vl_a1,'String',a(1)) 
-set(handles.vl_a2,'String',a(2)) 
-set(handles.vl_d1,'String',d(1)) 
-[pos,orien] = ForwardKinematic(a, alpha*pi/180, d, theta*pi/180)
-UpdateRobot(pos,orien,handles,11,11);
+global myScara;
+myScara = SCARA(handles,0.55,0.45,0.194,125,145,0.3)
+UpdateRobot(myScara,handles,22,22);   
 
 % --- Executes on button press in rb_THL400.
 function rb_THL400_Callback(hObject, eventdata, handles)
 
-global a alpha d theta
-global theta1_max theta2_max d3_max;
-a(1) = 0.35;
-a(2) = 0.45;
-d(1) = 0.15;
-theta1_max = 125;
-theta2_max = 145;
-d3_max = 0.16;
-set(handles.vl_a1,'String',a(1)) 
-set(handles.vl_a2,'String',a(2)) 
-set(handles.vl_d1,'String',d(1)) 
-[pos,orien] = ForwardKinematic(a, alpha*pi/180, d, theta*pi/180)
-UpdateRobot(pos,orien,handles,11,11);
+global myScara;
+myScara = SCARA(handles,0.35,0.45,0.15,125,145,0.16)
+UpdateRobot(myScara,handles,22,22);  
 
 % --- Executes on button press in rb_THL600.
 function rb_THL600_Callback(hObject, eventdata, handles)
 
-global a alpha d theta
-global theta1_max theta2_max d3_max;
-theta1_max = 125;
-theta2_max = 145;
-d3_max = 0.15;
-
-a(1) = 0.3;
-a(2) = 0.3;
-d(1) = 0.179;
-set(handles.vl_a1,'String',a(1)) 
-set(handles.vl_a2,'String',a(2)) 
-set(handles.vl_d1,'String',d(1)) 
-[pos,orien] = ForwardKinematic(a, alpha*pi/180, d, theta*pi/180)
-UpdateRobot(pos,orien,handles,11,11);
+global myScara;
+myScara = SCARA(handles,0.3,0.3,0.179,125,145,0.15)
+UpdateRobot(myScara,handles,22,22);  
