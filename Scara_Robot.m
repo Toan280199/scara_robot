@@ -28,13 +28,14 @@ set(handles.pn_FW,'Visible','on');
 set(handles.pn_IV,'Visible','off');
 
 global myScara;
-myScara = SCARA(handles,0.45,0.4,0.46,180,180,0.42)
+myScara = SCARA(handles,0.45,0.4,0.46,180,180,0.42);
 
 %output (x, y, z, yaw)
 set(handles.vl__FW_x,'String',num2str(myScara.pos(4,1)));
 set(handles.vl__FW_y,'String',num2str(myScara.pos(4,2)));
 set(handles.vl__FW_z,'String',num2str(myScara.pos(4,3)));
 set(handles.vl__FW_yaw,'String',num2str(myScara.orien(4,3)*180/pi));
+handles.robot_plot
 UpdateRobot(myScara,handles,22,22); 
 
 % --- Outputs from this function are returned to the command line.
@@ -460,15 +461,29 @@ x = str2double(get(handles.vl__IV_x,'String'));
 y = str2double(get(handles.vl__IV_y,'String'));
 z = str2double(get(handles.vl__IV_z,'String'));
 yaw = str2double(get(handles.vl__IV_yaw,'String'));
+tmpScara = myScara;
 [myScara,sucess] = myScara.InverseKinematic(x,y,z,yaw/180*pi,myScara);
-if sucess
+delta_t1 = myScara.theta(1)-tmpScara.theta(1);
+delta_t2 = myScara.theta(2)-tmpScara.theta(2);
+delta_d3 = myScara.d(3)-tmpScara.theta(3);
+delta_t4 = myScara.theta(4)-tmpScara.theta(4);
 
+if sucess
     [myScara.pos,myScara.orien] = myScara.ForwardKinematic(myScara)
-    set(handles.vl__IV_t1,'String',myScara.theta(1));
-    set(handles.vl__IV_t2,'String',myScara.theta(2));
-    set(handles.vl__IV_d3,'String',myScara.d(3));
-    set(handles.vl__IV_t4,'String',myScara.theta(4));
-    UpdateRobot(myScara,handles,22,22);  
+    for i=1:1:20
+        tmpScara.theta(1) = tmpScara.theta(1)+delta_t1/20;
+        tmpScara.theta(2) = tmpScara.theta(2)+delta_t2/20;
+        tmpScara.d(3) = tmpScara.d(3)+delta_d3/20;
+        tmpScara.theta(4) = tmpScara.theta(4)+delta_t4/20;
+
+        [tmpScara.pos,tmpScara.orien] = tmpScara.ForwardKinematic(tmpScara)
+        set(handles.vl__IV_t1,'String',tmpScara.theta(1));
+        set(handles.vl__IV_t2,'String',tmpScara.theta(2));
+        set(handles.vl__IV_d3,'String',tmpScara.d(3));
+        set(handles.vl__IV_t4,'String',tmpScara.theta(4));
+        UpdateRobot(tmpScara,handles,22,22);
+        pause(0.1);
+    end
 end
 
 % --- Executes on button press in btn_IV_reset.

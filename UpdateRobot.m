@@ -97,7 +97,9 @@ VeHinhTru(p3(1),p3(2),p3(3),0.02,1.4*d(1),[0 0 0]);
 VeHinhTru(p3(1),p3(2),p3(3)+1.4*d(1),0.03,0.03,[0 0 0]);
 
 %picker arm
-picker(p4(1),p4(2),p4(3),orien(4,3)*pi/180,0.15,0.05);
+for i=0:pi/4:3*pi/4
+    picker(p4(1),p4(2),p4(3),orien(4,3)*pi/180+i,0.15,0.05);
+end
 
 rotate3d on
 view(Az,El)
