@@ -34,20 +34,20 @@ classdef SCARA
             set(handles.vl_a2,'String',a2) 
             set(handles.vl_d1,'String',d1)
         end
-        function [p_robot,o_robot] = ForwardKinematic(obj)
-            a = obj.a;
-            alpha = obj.alpha*pi/180;
-            d = obj.d;
-            theta = obj.theta*pi/180;
+        function [p_robot,o_robot] = ForwardKinematic(self)
+            a = self.a;
+            alpha = self.alpha*pi/180;
+            d = self.d;
+            theta = self.theta*pi/180;
             
-            theta1_max = obj.theta1_max;
-            theta2_max = obj.theta2_max;
-            d3_max = obj.d3_max;
+            theta1_max = self.theta1_max;
+            theta2_max = self.theta2_max;
+            d3_max = self.d3_max;
 
             if (abs(theta(1))*180/pi>theta1_max)||(abs(theta(2))*180/pi>theta2_max)||(d(3)<-d3_max)
                 ok = 0;
                 obj = obj;
-                warndlg('Out of workspace','Warning');
+                h=questdlg('Workspace Singularity','Warning','OK','OK');
                 return
             end
 
@@ -106,7 +106,7 @@ classdef SCARA
                 if (abs(theta1*180/pi)>obj.theta1_max)||(abs(theta2*180/pi)>obj.theta2_max)||(d3<-obj.d3_max)
                     ok = 0;
                     obj = obj;
-                    warndlg('Out of workspace','Warning');
+                    h=questdlg('Workspace Singularity','Warning','OK','OK');
                     return
                 else
                     ok = 1;
@@ -118,8 +118,48 @@ classdef SCARA
             else
                 ok = 0;
                 obj = obj;
-                warndlg('Out of workspace','Warning');
+                h=questdlg('Workspace Singularity','Warning','OK','OK');
                 return
+            end
+        end
+        
+        function singularity = KinematicSingularity(obj)
+            a = obj.a;
+            alpha = obj.alpha/180*pi;
+            d = obj.d;
+            theta = obj.theta/180*pi;
+
+            A01 = Link_matrix(a(1),alpha(1),d(1),theta(1));
+            A12 = Link_matrix(a(2),alpha(2),d(2),theta(2));
+            A23 = Link_matrix(a(3),alpha(3),d(3),theta(3));
+            A34 = Link_matrix(a(4),alpha(4),d(4),theta(4));
+
+            A02 = A01*A12;
+            A03 = A02*A23;
+            A04 = A03*A34;
+            
+            z0 = [0 0 1]';
+            p0 = [0 0 0]';
+
+            z1 = A01(1:3,3);
+            z2 = A02(1:3,3);
+            z3 = A03(1:3,3);
+            z4 = A04(1:3,3);
+
+            p1 = A01(1:3,4);
+            p2 = A02(1:3,4);
+            p3 = A03(1:3,4);
+            p4 = A04(1:3,4);
+
+            %% Khop 1 xoay, khop 2 xoay, khop 3 tinh tien, khop 4 xoay
+            J = [cross(z0,p4-p0) cross(z1,p4-p1) z2 cross(z3,p4-p3);
+                 z0 z1 [0;0;0] z3];
+            J = J(1:3,1:3);
+            det(J)
+            if abs(det(J)) <= 10e-4
+                singularity = 1;
+            else
+                singularity = 0;
             end
         end
     end
