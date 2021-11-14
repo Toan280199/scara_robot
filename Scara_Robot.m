@@ -29,7 +29,9 @@ set(handles.pn_IV,'Visible','off');
 set(handles.pn_PN,'Visible','off');
 
 global myScara;
+global plot_pos;
 myScara = SCARA(handles,0.45,0.4,0.46,180,180,0.42);
+plot_pos = [];
 
 %output (x, y, z, yaw)
 set(handles.vl__FW_x,'String',num2str(myScara.pos(4,1)));
@@ -139,6 +141,9 @@ set(handles.btn_Forward,'BackgroundColor',[0.94 0.94 0.94]);
 set(handles.pn_FW,'Visible','Off');
 set(handles.pn_IV,'Visible','Off');
 set(handles.pn_PN,'Visible','On');
+
+% figure(2)
+% set(gcf, 'Position', [0.0799,0.2899,0.3972,0.2184]);
 
 % --- Executes on slider movement.
 function sld__FW_t1_Callback(hObject, eventdata, handles)
@@ -685,8 +690,6 @@ if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgr
     set(hObject,'BackgroundColor','white');
 end
 
-
-
 function zd_Callback(hObject, eventdata, handles)
 % hObject    handle to zd (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
@@ -722,6 +725,203 @@ function yawd_Callback(hObject, eventdata, handles)
 % --- Executes during object creation, after setting all properties.
 function yawd_CreateFcn(hObject, eventdata, handles)
 % hObject    handle to yawd (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+% --- Executes on button press in btn_gotoPoint.
+function btn_gotoPoint_Callback(hObject, eventdata, handles)
+
+global myScara
+global plot_pos 
+joint_vel = [0 0 0 0];
+x0 = myScara.pos(4,1);
+y0 = myScara.pos(4,2);
+z0 = myScara.pos(4,3);
+yaw0 = myScara.orien(4,3);
+
+xd = str2double(get(handles.xd,'String'));
+yd = str2double(get(handles.yd,'String'));
+zd = str2double(get(handles.zd,'String'));
+yawd = str2double(get(handles.yawd,'String'));
+
+v_max = str2double(get(handles.vl_vmax,'String'));
+a_max = str2double(get(handles.vl_amax,'String'));
+        
+if(handles.btn_tra_vel.Value)
+    if(handles.btn_Straight.Value)
+        s_max = norm([xd-x0 yd-y0 zd-z0]);
+        [q,v,a,t,v_max] = Trajectory_3_seqment(s_max,v_max,a_max);
+        set(handles.vl_vmax,'String',num2str(v_max));
+        
+        theta = atan2(zd-z0,sqrt((yd-y0)^2+(xd-x0)^2));
+        phi = atan2(yd-y0,xd-x0);
+
+        x = x0 + q*cos(theta)*cos(phi);
+        y = y0 + q*cos(theta)*sin(phi);
+        z = z0 + q*sin(theta);
+        yaw = yaw0 + q/s_max*(yawd-yaw0);
+        
+        SetupFigure2(t,q,v,a);   %% for trajectory planning
+        
+        for i=1:1:length(q)
+            pre_t1 = myScara.theta(1);
+            pre_t2 = myScara.theta(2);
+            pre_d3 = myScara.d(3);
+            pre_t4 = myScara.theta(4);
+            [myScara,sucess] = myScara.InverseKinematic(x(i),y(i),z(i),yaw(i)/180*pi,myScara);
+            if myScara.KinematicSingularity(myScara) == 1
+                h=questdlg('Kinematic Singularity','Warning','OK','OK');
+                return
+            end
+            if sucess
+                [myScara.pos,myScara.orien] = myScara.ForwardKinematic(myScara);
+                if i>1
+                    joint_vel = [joint_vel; [myScara.theta(1)-pre_t1 myScara.theta(2)-pre_t2 myScara.d(3)-pre_d3 myScara.theta(4)-pre_t4]/(t(i)-t(i-1))];
+                end
+                
+                if mod(i,50) == 0 || i == length(q)
+                    plot_pos = [plot_pos;myScara.pos(4,1) myScara.pos(4,2) myScara.pos(4,3)];
+                    UpdateRobot(myScara,handles,22,22);
+                    figure(2)
+                    subplot(6,2,1)
+                    plot(t(1:i),x0 + q(1:i)*cos(theta)*cos(phi),'b','LineWidth',1.5);
+                    subplot(6,2,3)
+                    plot(t(1:i),y0 + q(1:i)*cos(theta)*sin(phi),'b','LineWidth',1.5);
+                    subplot(6,2,5)
+                    plot(t(1:i),z0 + q(1:i)*sin(theta),'b','LineWidth',1.5);
+                    subplot(6,2,7)
+                    plot(t(1:i),q(1:i),'b','LineWidth',1.5);
+                    subplot(6,2,9)
+                    plot(t(1:i),v(1:i),'b','LineWidth',1.5);
+                    subplot(6,2,11)
+                    plot(t(1:i),a(1:i),'b','LineWidth',1.5);
+
+                    subplot(6,2,2)
+                    plot(t(1:i),joint_vel(1:i,1),'b','LineWidth',1.5);
+
+                    subplot(6,2,4)
+                    plot(t(1:i),joint_vel(1:i,2),'b','LineWidth',1.5);
+
+                    subplot(6,2,6)
+                    plot(t(1:i),joint_vel(1:i,3),'b','LineWidth',1.5);
+
+                    subplot(6,2,8)
+                    plot(t(1:i),joint_vel(1:i,4),'b','LineWidth',1.5);
+
+                    pause(0.2)
+                end
+            end
+        end
+    end
+else
+    if(handles.btn_Straight.Value)
+        s_max = norm([xd-x0 yd-y0 zd-z0]);
+        [q,v,a,t,v_max] = Trajectory_5_seqment(s_max,v_max,a_max);
+        set(handles.vl_vmax,'String',num2str(v_max));
+        SetupFigure2(t,q,v,a);   %% for trajectory planning
+
+        theta = atan2(zd-z0,sqrt((yd-y0)^2+(xd-x0)^2));
+        phi = atan2(yd-y0,xd-x0);
+
+        x = x0 + q*cos(theta)*cos(phi);
+        y = y0 + q*cos(theta)*sin(phi);
+        z = z0 + q*sin(theta);
+        yaw = yaw0 + q/s_max*(yawd-yaw0);;
+
+        for i=1:1:length(q)
+            pre_t1 = myScara.theta(1);
+            pre_t2 = myScara.theta(2);
+            pre_d3 = myScara.d(3);
+            pre_t4 = myScara.theta(4);
+            [myScara,sucess] = myScara.InverseKinematic(x(i),y(i),z(i),yaw(i)/180*pi,myScara);
+            if myScara.KinematicSingularity(myScara) == 1
+                h=questdlg('Kinematic Singularity','Warning','OK','OK');
+                return
+            end
+            if sucess
+                [myScara.pos,myScara.orien] = myScara.ForwardKinematic(myScara);
+                if i>1
+                    joint_vel = [joint_vel; [myScara.theta(1)-pre_t1 myScara.theta(2)-pre_t2 myScara.d(3)-pre_d3 myScara.theta(4)-pre_t4]/(t(i)-t(i-1))];
+                end
+                
+                if mod(i,50) == 0 || i == length(q)
+                    UpdateRobot(myScara,handles,22,22);
+                    plot_pos = [plot_pos;myScara.pos(4,1) myScara.pos(4,2) myScara.pos(4,3)];
+                    figure(2)
+                    subplot(6,2,1)
+                    plot(t(1:i),x0 + q(1:i)*cos(theta)*cos(phi),'b','LineWidth',1.5);
+                    subplot(6,2,3)
+                    plot(t(1:i),y0 + q(1:i)*cos(theta)*sin(phi),'b','LineWidth',1.5);
+                    subplot(6,2,5)
+                    plot(t(1:i),z0 + q(1:i)*sin(theta),'b','LineWidth',1.5);
+                    subplot(6,2,7)
+                    plot(t(1:i),q(1:i),'b','LineWidth',1.5);
+                    subplot(6,2,9)
+                    plot(t(1:i),v(1:i),'b','LineWidth',1.5);
+                    subplot(6,2,11)
+                    plot(t(1:i),a(1:i),'b','LineWidth',1.5);
+
+                    subplot(6,2,2)
+                    plot(t(1:i),joint_vel(1:i,1),'b','LineWidth',1.5);
+
+                    subplot(6,2,4)
+                    plot(t(1:i),joint_vel(1:i,2),'b','LineWidth',1.5);
+
+                    subplot(6,2,6)
+                    plot(t(1:i),joint_vel(1:i,3),'b','LineWidth',1.5);
+
+                    subplot(6,2,8)
+                    plot(t(1:i),joint_vel(1:i,4),'b','LineWidth',1.5);
+
+                    pause(0.2)
+                end
+            end
+        end
+    end
+end
+
+function vl_amax_Callback(hObject, eventdata, handles)
+% hObject    handle to vl_amax (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of vl_amax as text
+%        str2double(get(hObject,'String')) returns contents of vl_amax as a double
+
+
+% --- Executes during object creation, after setting all properties.
+function vl_amax_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to vl_amax (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+
+function vl_vmax_Callback(hObject, eventdata, handles)
+% hObject    handle to vl_vmax (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of vl_vmax as text
+%        str2double(get(hObject,'String')) returns contents of vl_vmax as a double
+
+
+% --- Executes during object creation, after setting all properties.
+function vl_vmax_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to vl_vmax (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    empty - handles not created until after all CreateFcns called
 

@@ -1,15 +1,21 @@
 function UpdateRobot(robot,handles,Az,El)
 
+global plot_pos
+
 set(handles.cb_view_ws,'Value',0);
 set(handles.cb_show_coor,'Value',0);
 set(handles.tb_dh,'Data',[robot.a robot.alpha robot.d robot.theta]);   %put dh parameter to DH table
 set(handles.tb_pos_orien,'Data',[robot.pos robot.orien*180/pi]);   %put dh parameter to DH table
 
 robot_plot = handles.robot_plot;
-axes(robot_plot)
+
+axes(robot_plot);
 cla reset
 hold on
 grid on
+if ~isempty(plot_pos)
+    plot3(plot_pos(:,1),plot_pos(:,2),plot_pos(:,3),'b','LineWidth',1.5);
+end
 
 p0 = [0 0 0];
 p1 = robot.pos(1,:);
