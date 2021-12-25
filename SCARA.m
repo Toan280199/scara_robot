@@ -22,7 +22,7 @@ classdef SCARA
             obj.a = [0; 0; 0; 0];
             obj.d = [0; 0; 0; 0];
             obj.alpha = [0.00; 0.00; 0.00; 180];
-            obj.theta = [0.00; 90.0; 0.00; 0.00];
+            obj.theta = [0.00; 90.0; 0.00; -90];
             obj.a(1)=a1;
             obj.a(2)=a2;
             obj.d(1)=d1;
@@ -47,7 +47,6 @@ classdef SCARA
             if (abs(theta(1))*180/pi>theta1_max)||(abs(theta(2))*180/pi>theta2_max)||(d(3)<-d3_max)
                 ok = 0;
                 obj = obj;
-                h=questdlg('Workspace Singularity','Warning','OK','OK');
                 return
             end
 
@@ -85,23 +84,23 @@ classdef SCARA
             c2 = (x^2 + y^2 - a1^2 - a2^2)/(2*a1*a2);
             if (abs(c2)<=1)
                 s2 = sqrt(1-c2^2);
-                theta2 = atan2(s2,c2);
+                theta21 = atan2(s2,c2);
+                theta22 = atan2(-s2,c2);
+                
+                if abs(theta21 - obj.theta(2)*pi/180) < pi
+                    theta2 = theta21;
+                else
+                    theta2 = theta22;
+                    s2 = -s2;
+                end
 
                 t1 = [a1+a2*c2 -a2*s2;a2*s2 a1+a2*c2]^(-1)*[x;y];
                 c1 = t1(1);
                 s1 = t1(2);
-                theta1 = atan(s1/c1);
+                theta1 = atan2(s1,c1);
 
                 d3 = z - d1;
                 theta4 = yaw - ( theta1 + theta2 );
-
-                if(theta4>pi)
-                    theta4 = theta4-2*pi;
-                end
-
-                if(theta4<-pi)
-                    theta4 = theta4+2*pi;
-                end
                 
                 if (abs(theta1*180/pi)>obj.theta1_max)||(abs(theta2*180/pi)>obj.theta2_max)||(d3<-obj.d3_max)
                     ok = 0;
@@ -118,7 +117,7 @@ classdef SCARA
             else
                 ok = 0;
                 obj = obj;
-                h=questdlg('Workspace Singularity','Warning','OK','OK');
+%                 h=questdlg('Workspace Singularity','Warning','OK','OK');
                 return
             end
         end

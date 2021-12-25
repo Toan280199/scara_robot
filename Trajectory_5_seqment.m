@@ -1,7 +1,7 @@
 function [s,v,a,t,v_max] = Trajectory_5_seqment(s_max,v_max,a_max)
 
 
-if v_max > sqrt(0.5*s_max*a_max)-0.1;
+if v_max > sqrt(0.5*s_max*a_max)-0.01;
     v_max = sqrt(0.5*s_max*a_max)
     tc = v_max/a_max;
     tf = 4*tc;

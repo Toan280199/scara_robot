@@ -1,73 +1,49 @@
-function  [q_max, p]= CircularPlanning(p_pre,p_desired)
-% p: the set of points lying on the arc
-% p_pre = [x y z] old position
-% p_desired = [x y z] desired position
+function  [q,v,a,t,P] = CircularPlanning(P1,P2,v_max,a_max,mode)
+%% Code ve cung tron di qua 2 diem P1, P2 (P3 la diem phu) P2, P3: 3x1 matrix
+% mode = 0 => van toc hinh thang
+% mode = 1 => S-curve
 
-p_x_old = p_pre(1);
-p_y_old = p_pre(2);
-p_z_old = p_pre(3);
+P3 = (P1+P2)/2+[0.1;0.1;0];
+% P3 = [0.85;0;0.1];
 
-% desired value
-p_x = p_desired(1);
-p_y = p_desired(2);
-p_z = p_desired(3);
-%%
-% cal distance
-q_max = ((p_x - p_x_old)^2+(p_y - p_y_old)^2+(p_z - p_z_old)^2)^(1/2);
-% cal 3d vector parameters
-%%
-%%
-p1 = [p_x_old ; p_y_old ; p_z_old];
-p2 = [p_x     ; p_y     ; p_z];
-%% 
-% Vector phap tuyen
-n_vec = p2 - p1;
-% Trung diem AB
-I = (p1+p2)/2;
-% plot3(I(1),I(2),I(3),'gx')
-syms x_cir y_cir z_cir
-P = dot(n_vec, [x_cir-I(1);y_cir-I(2);z_cir-I(3)]);
-if isreal(coeffs(P,x_cir))
-     z_cir = I(3);
-     y_cir = I(2)-0.5;
-     x_cir = eval(solve(P,x_cir));
-elseif isreal(coeffs(P,y_cir))
-    x_cir = I(1)-0.5;
-    z_cir = I(3);
-    y_cir = eval(solve(P,y_cir))    ;
-elseif isreal(coeffs(P,z_cir))
-    x_cir = I(1)-0.5;
-    y_cir = I(2)-0.5;
-    z_cir = eval(solve(P,z_cir))  ;
-elseif (p_x== p_x_old)
-    x_cir = I(1)-0.5;
-    y_cir = I(2)-0.5;
-    z_cir = eval(solve(P,z_cir));
-elseif (p_z== p_z_old)
-    z_cir = I(3);
-    y_cir = I(2)-0.5;
-    x_cir = eval(solve(P,x_cir));
-elseif (p_y== p_y_old)
-    z_cir = I(3);
-    y_cir = I(2)-0.5;
-    x_cir = eval(solve(P,x_cir));
+%% Unit vector orthogonal to plane of 3 points
+v1 = cross(P2-P1,P3-P1);
+v1 = v1/norm(v1); 
+
+%% The center, P0, must satisfy these three equations:
+% dot(P0-P1,v1) = 0
+% dot(P0-(p2+P1)/2,P2-P1) = 0
+% dot(P0-(p3+P1)/2,P3-P1) = 0
+
+A = [v1';P2'-P1';P3'-P1'];
+B = [dot(P1',v1');dot((P1'+P2')/2,P2'-P1');dot((P1'+P3')/2,P3'-P1')];
+P0 = A\B
+
+R = norm(P1-P0);
+
+v2 = P1-P0;
+R = norm(v2);
+v2 = v2/R;
+v3 = cross(v2,v1);
+v3 = v3/norm(v3);
+
+s_max = R*acos(dot((P1-P0)/R,(P2-P0)/R));
+s_max = real(s_max);
+if s_max > 0
+    rho = 1;
 else
-    x_cir = I(1)-0.5;
-    y_cir = I(2)-0.5;
-    z_cir = eval(solve(P,z_cir))  ;
+    s_max = -s_max;
+    rho = -1;
 end
-O_cir(1) = x_cir;
-O_cir(2) = y_cir;
-O_cir(3) = z_cir;
 
-OA = (O_cir' - p1);
-OB = (O_cir' - p2);
-z_hat = cross(OA,OB)/norm(cross(OA,OB));
-%%
-gamma_max = acos(dot(OA,OB)/(norm(OA)^2));
+if mode == 0
+    [q,v,a,t,~] = Trajectory_3_seqment(s_max,v_max,a_max);
+else
+    [q,v,a,t,~] = Trajectory_5_seqment(s_max,v_max,a_max);
+end
 
-% tinh su tuong duong
-gamma = linspace(0, gamma_max ,101);
-Ox = -(OA*cos(gamma) + cross(z_hat , OA)*sin(gamma));
-plot3(O_cir(1)+Ox(1,:),O_cir(2)+Ox(2,:),O_cir(3)+Ox(3,:),'b')
-axis equal
+syms tt;
+t1 = solve(v2 - v2*cos(tt) - v3*sin(tt),tt);
+t1 = double(t1);
+
+P = P0 + R*(v2*cos(t1+rho*q/R) + v3*sin(t1+rho*q/R));

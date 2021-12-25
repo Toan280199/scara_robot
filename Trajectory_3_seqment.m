@@ -9,7 +9,7 @@ qc = 1/2*a_max*tc^2;
 t_m = (q_max-2*qc)/v_max;
 tf = 2*tc+t_m;
 
-t = 0:tf/1000:tf
+t = 0:tf/1000:tf;
 for i=1:length(t)
     if t(i)<tc
         q(i)=1/2*a_max*t(i)^2;

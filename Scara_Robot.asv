@@ -346,8 +346,6 @@ else
         
         start_simu(myScara,t,theta1*ones(401,1),theta2*ones(401,1),d3*ones(401,1),theta4*ones(401,1));
         start(myTimer);
-    else
-        h=questdlg('Workspace Singularity','Warning','OK','OK');
     end
 end
 UpdateRobot(myScara,handles,22,22);

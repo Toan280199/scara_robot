@@ -1,4 +1,4 @@
-function PlotWorkspace(handles,robot)
+function PlotWorkspace(robot,handles)
 
 axes(handles.robot_plot);
 theta1_m = robot.theta1_max*pi/180;
